@@ -273,19 +273,17 @@ Deploying containers
  * [Swarm Frontends](https://github.com/docker/swarm-frontends)
  * [Running a Small Docker Swarm Cluster](http://blog.scottlowe.org/2015/03/06/running-own-docker-swarm-cluster/)
 
-### Consul Articles
+### Discover Service Articles
 
+ * [Docker Swarm Discover](https://docs.docker.com/swarm/discovery/)
  * [Consul service discover with docker](http://progrium.com/blog/2014/08/20/consul-service-discovery-with-docker/)
  * [Consul Docker Image](https://hub.docker.com/r/progrium/consul/)
  * [Another Consul Docker Image](https://hub.docker.com/r/qnib/consul/)
+ * [Instruction on getting *etcd* running under docker can be found here](https://coreos.com/etcd/docs/latest/docker_guide.html).
 
 ### Elastic Search Articles
 
  * [Elastic Search Docker Image](https://hub.docker.com/r/qnib/elk/)
-
-### etcd Articles
-
- * [Instruction on getting *etcd* running under docker can be found here](https://coreos.com/etcd/docs/latest/docker_guide.html).
 
 
 [etcd]: https://coreos.com/etcd
