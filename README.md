@@ -1,11 +1,11 @@
 Creating a Docker Swarm Cluster on OS X Virtualbox
 ===============
 
-[Docker Swarm] is docker's cluster implementation for managing clusters running docker containers.
+[Docker Swarm] is docker's implementation for managing clusters running of docker containers.
 
 ## Terminology
 
-### Docker
+### [Docker]
 
  * **Swarm:** Dockers's cluster implementation, comparable to [Kubernetes].
  * **Machine:** Hosts running the docker-daemon for deployment of docker containers. Think VM's, VPS, Baremetal.
@@ -13,7 +13,7 @@ Creating a Docker Swarm Cluster on OS X Virtualbox
  * **Data Volume:** A *data volume* is a specially-designated directory within one or more containers that bypasses the Union File System.
 
 
-### Kubernetes
+### [Kubernetes]
 
  * **Cluster:** A cluster is a set of physical or virtual machines and other infrastructure resources used by Kubernetes to run your applications.
  * **Pod:** A pod is a co-located group of containers and volumes.
@@ -24,6 +24,17 @@ Creating a Docker Swarm Cluster on OS X Virtualbox
 
 Setup Docker Swarm Discovery Service
 ===============
+
+## Pre-Requisites
+
+ This tutorial was written with Mac OSX in mind. Although Docker and VirtualBox are avialable for Linux and Windows,
+ The steps below may not completely work in either of those environments.
+
+ Please feel free to submit pull requests for any changes that may be needed to make this applicable for Linux and/or Windows, and I'm include them.
+
+ * [Virtual Box]
+ * [Virtual Box Extension Pack]
+ * [Docker Toolbox]
 
 The first decision that we need to make when we are configuring our cluster is which service discovery method that we are going to use.
 There are a number of different Discover Servers supported by Docker Swarm:
@@ -251,38 +262,42 @@ Now if we open the [Consul Web UI](http://localhost:8500/ui/), we should be able
 Deploying containers
 ===============
 
-## Other Articles
+## Futher Reading
+
+### Docker Articles
 
  * [Docker Overlay Networks: That was Easy](https://medium.com/on-docker/docker-overlay-networks-that-was-easy-8f24baebb698#.x414sz27h)
- * [](https://docs.docker.com/swarm/install-w-machine/)
- * [](https://docs.docker.com/swarm/provision-with-machine/)
- * [](https://blog.docker.com/2015/11/deploy-manage-cluster-docker-swarm/)
- * [](https://github.com/docker/swarm-frontends)
+ * [Evaluate Swarm in a sandbox](https://docs.docker.com/swarm/install-w-machine/)
+ * [Provision a Swarm cluster with Docker Machine](https://docs.docker.com/swarm/provision-with-machine/)
+ * [Deploy and Manage Any Cluster Manager with Docker Swarm](https://blog.docker.com/2015/11/deploy-manage-cluster-docker-swarm/)
+ * [Swarm Frontends](https://github.com/docker/swarm-frontends)
+ * [Running a Small Docker Swarm Cluster](http://blog.scottlowe.org/2015/03/06/running-own-docker-swarm-cluster/)
 
-*  [Consul]
-https://hub.docker.com/r/progrium/consul/
-http://progrium.com/blog/2014/08/20/consul-service-discovery-with-docker/
+### Consul Articles
 
-https://hub.docker.com/r/qnib/consul/
+ * [Consul service discover with docker](http://progrium.com/blog/2014/08/20/consul-service-discovery-with-docker/)
+ * [Consul Docker Image](https://hub.docker.com/r/progrium/consul/)
+ * [Another Consul Docker Image](https://hub.docker.com/r/qnib/consul/)
 
-*  Elastic Search
-https://hub.docker.com/r/qnib/elk/
+### Elastic Search Articles
+
+ * [Elastic Search Docker Image](https://hub.docker.com/r/qnib/elk/)
+
+### etcd Articles
+
+ * [Instruction on getting *etcd* running under docker can be found here](https://coreos.com/etcd/docs/latest/docker_guide.html).
 
 
-### Discovery Services
-
- * [etcd]
-
-Instruction on getting *etcd* running under docker can be found [here](https://coreos.com/etcd/docs/latest/docker_guide.html).
-
- * [Consul]
-
-http://blog.scottlowe.org/2015/03/06/running-own-docker-swarm-cluster/
-
- * [zookeeper]
-
-[etcd]: https://coreos.com/etcd/docs/latest/
+[etcd]: https://coreos.com/etcd
 [Consul]: https://www.consul.io
 [zookeeper]: https://zookeeper.apache.org
-[Docker Swarm]: https://docs.docker.com/swarm/
 [Kubernetes]: http://kubernetes.io
+[Elastic]: https://www.elastic.co
+
+[Docker]: https://www.docker.com
+[Docker Swarm]: https://docs.docker.com/swarm/
+[Docker Machine]: https://docs.docker.com/machine/
+[Docker Toolbox]: https://www.docker.com/products/docker-toolbox
+
+[VirtualBox]: https://www.virtualbox.org/wiki/Downloads
+[VirtualBox Extension Pack]: https://www.virtualbox.org/wiki/Downloads
