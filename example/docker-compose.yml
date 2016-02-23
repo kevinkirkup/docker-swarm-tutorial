@@ -1,0 +1,43 @@
+---
+version: '2'
+services:
+
+
+  # RabbitMQ with Manager plugin
+  rabbit-mgt:
+    image: rabbitmq:3-management
+    ports:
+      - "4369:4369"
+      - "5672:5672"
+      - "15672:15672"
+      - "25672:25672"
+
+    environment:
+      RABBITMQ_DEFAULT_USER: "rabbit-user"
+      RABBITMQ_DEFAULT_PASS: "rabbit-password"
+
+  # Producer adding work to the task queue
+  producer:
+    image: celery
+    restart: always
+    environment:
+      CELERY_BROKER_URL: "amqp://rabbit-user:rabbit-password@rabbit"
+    volumes:
+      - ./celery:/home/user
+    links:
+      - rabbit-mgt:rabbit
+    depends_on:
+      - rabbit-mgt
+    command: bash startup.sh
+
+  # Consumer of the work off the task queue
+  consumer:
+    image: celery
+    environment:
+      CELERY_BROKER_URL: "amqp://rabbit-user:rabbit-password@rabbit"
+    volumes:
+      - ./celery:/home/user
+    links:
+      - rabbit-mgt:rabbit
+    depends_on:
+      - rabbit-mgt
