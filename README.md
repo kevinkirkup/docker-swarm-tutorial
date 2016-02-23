@@ -5,7 +5,7 @@ Creating a Docker Swarm Cluster on OS X Virtualbox
 
 ## Terminology
 
-### [Docker]
+### Docker
 
  * **Swarm:** Dockers's cluster implementation, comparable to [Kubernetes].
  * **Machine:** Hosts running the docker-daemon for deployment of docker containers. Think VM's, VPS, Baremetal.
@@ -13,13 +13,14 @@ Creating a Docker Swarm Cluster on OS X Virtualbox
  * **Data Volume:** A *data volume* is a specially-designated directory within one or more containers that bypasses the Union File System.
 
 
-### [Kubernetes]
+### Kubernetes
 
  * **Cluster:** A cluster is a set of physical or virtual machines and other infrastructure resources used by Kubernetes to run your applications.
  * **Pod:** A pod is a co-located group of containers and volumes.
  * **Node:** A node is a physical or virtual machine running Kubernetes, onto which pods can be scheduled.
  * **Service:** A service defines a set of pods and a means by which to access them, such as single stable IP address and corresponding DNS name.
- * **Volume:** A volume is a directory, possibly with some data in it, which is accessible to a Container as part of its filesystem. Kubernetes volumes build upon Docker Volumes, adding provisioning of the volume directory and/or device.
+ * **Volume:** A volume is a directory, possibly with some data in it, which is accessible to a Container as part of its filesystem.
+Kubernetes volumes build upon Docker Volumes, adding provisioning of the volume directory and/or device.
 
 
 Setup Docker Swarm Discovery Service
@@ -32,8 +33,8 @@ Setup Docker Swarm Discovery Service
 
  Please feel free to submit pull requests for any changes that may be needed to make this applicable for Linux and/or Windows, and I'm include them.
 
- * [Virtual Box]
- * [Virtual Box Extension Pack]
+ * [VirtualBox]
+ * [VirtualBox Extension Pack]
  * [Docker Toolbox]
 
 The first decision that we need to make when we are configuring our cluster is which service discovery method that we are going to use.
@@ -52,13 +53,14 @@ When we use Docker Swarm for discovery, we need download the *swarm* docker cont
 
 ### Create Machine - *default*
 
-To create our token we need to run *swarm* in a docker container. This can be run in any available machine available, and doesn't need to be persistent. I our case, we will create a *default* machine for running our *swarm* docker image.
+To create our token we need to run *swarm* in a docker container. This can be run in any available machine available, and doesn't need to be persistent.
+I our case, we will create a *default* machine for running our *swarm* docker image.
 
     $ docker-machine create -d virtualbox default
 
 This will create a VirtualBox VM on our local development machine named default
 
-### Creating our Swarm Token
+### Option1: Creating our Swarm Token
 
 We need to point docker to use our *default* machine that we just created. This is done by sourcing the *default* machine
 environment in to our current shell. *Note!* This is a typical idiom used with docker, so you will see it in a number of examples.
@@ -71,16 +73,18 @@ This will cause the container to be destroyed once the container finishes execut
     $ docker run --rm swarm create
     866d4e73e57a6710b0c471847ba1edfb
 
-The returned has will be our Swarm discover token and is used when creating out master and worker nodes using the `--swarm-discovery=token:\\866d4e73e57a6710b0c471847ba1edfb` option when creating our machines later on.
+The returned has will be our Swarm discover token and is used when creating out master and worker nodes using
+the `--swarm-discovery=token:\\866d4e73e57a6710b0c471847ba1edfb` option when creating our machines later on.
 
-## Using Consul for Swarm Discovery
+## Option 2: Using Consul for Swarm Discovery
 
 Using Docker Swarm as a discovery service is nice, but we may already have existing infrastructure that we need to support.
 I our case, we are going to use [Consul] for our discovery service for the rest of this tutorial.
 
 ### Create the docker machine to host our Consul instance
 
-First, we will need to create a Machine to host or Consul instance and start our container on the new machine. This will not be part allocated as part of our cluster.
+First, we will need to create a Machine to host or Consul instance and start our container on the new machine.
+This will not be part allocated as part of our cluster.
 
 ```sh
 $ docker-machine create \
@@ -133,7 +137,8 @@ Status: Downloaded newer image for progrium/consul:latest
 5c7159173814124fd229163641e82a564b9488b9e6093a487ca22618314830a3
 ```
 
-I the command above, we told docker to run docker container on the *consul-kv* machine using the *progrium/consul* docker image, give it the hostname of *consul* (`-h`) with docker container *consul* (`--name`).
+I the command above, we told docker to run docker container on the *consul-kv* machine using the *progrium/consul* docker image,
+give it the hostname of *consul* (`-h`) with docker container *consul* (`--name`).
 The `-d` option tells docker to run in the background (detached mode).
 The `-p 8500:8500` specifies that the guest port 8500 should be exposed on the host on port 8500.
 The options `-server -bootstrap` are passed to the
@@ -142,8 +147,8 @@ The options `-server -bootstrap` are passed to the
 
 To create our store cluster, we are going to have to create a few more machines to run our docker containers on.
 
-    1x Manager
-    nx Worker - For this tutorial, we are going to be creating 2 Workers.
+    1 x Manager
+    n x Worker - For this tutorial, we are going to be creating 2 Workers.
 
 When we are done, we should have something that looks like this:
 
@@ -160,7 +165,8 @@ consul-kv   -        virtualbox   Running   tcp://192.168.99.108:2376           
 
 ### Create the Master Machine
 
-First we create the Swarm Master. This is the VM that will handle the distribute of containers to the cluster and also represents the cluster to the outside world.
+First we create the Swarm Master. This is the VM that will handle the distribute of containers to
+the cluster and also represents the cluster to the outside world.
 
 There are a few arguments that we will use to setup access to the discovery service we setup earlier.
 
@@ -168,15 +174,17 @@ There are a few arguments that we will use to setup access to the discovery serv
  * `--swarm-master` This is the master for the swarm cluster
  * `--swarm-discovery` This is sets the discover service to use for the swarm
 
-There are a couple of options that specify how the docker daemon needs to be configured. The use the `--engine-opt` command line option.
+There are a couple of options that specify how the docker daemon needs to be configured. The use
+the `--engine-opt` command line option.
 
  * `cluster-store` - URL of the distributed storage backend
  * `cluster-advertise` - Address of the daemon instance on the cluster
 
-For more information on the available options, check the documentation for the [docker daemon](https://github.com/docker/docker/blob/master/docs/reference/commandline/daemon.md) on github.
+For more information on the available options, check the documentation for the [Docker Daemon] on github.
 
-In addition to the normal arguments we pass to `docker-machine create` we will add the `--swarm` to tell it we want the machine to be part of a swarm cluster and `--swarm-master` to indicate this is the master for the cluster.
-
+In addition to the normal arguments we pass to `docker-machine create` we will add the `--swarm`
+to tell it we want the machine to be part of a swarm cluster and `--swarm-master` to indicate this
+is the master for the cluster.
 
 ```sh
 $ docker-machine create \
@@ -272,6 +280,8 @@ Deploying containers
  * [Deploy and Manage Any Cluster Manager with Docker Swarm](https://blog.docker.com/2015/11/deploy-manage-cluster-docker-swarm/)
  * [Swarm Frontends](https://github.com/docker/swarm-frontends)
  * [Running a Small Docker Swarm Cluster](http://blog.scottlowe.org/2015/03/06/running-own-docker-swarm-cluster/)
+ * [Logging with Docker — Part 1](https://medium.com/@yoanis_gil/logging-with-docker-part-1-b23ef1443aac#.xh2v5aq9j)
+ * [How to scale Docker Containers with Docker-Compose](https://www.brianchristner.io/how-to-scale-a-docker-container-with-docker-compose/)
 
 ### Discover Service Articles
 
@@ -295,7 +305,9 @@ Deploying containers
 [Docker]: https://www.docker.com
 [Docker Swarm]: https://docs.docker.com/swarm/
 [Docker Machine]: https://docs.docker.com/machine/
+[Docker Compose]: https://docs.docker.com/compose/
 [Docker Toolbox]: https://www.docker.com/products/docker-toolbox
+[Docker Daemon]: https://github.com/docker/docker/blob/master/docs/reference/commandline/daemon.md
 
 [VirtualBox]: https://www.virtualbox.org/wiki/Downloads
 [VirtualBox Extension Pack]: https://www.virtualbox.org/wiki/Downloads
