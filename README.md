@@ -3,6 +3,9 @@ Creating a Docker Swarm Cluster on OS X Virtualbox
 
 [Docker Swarm] is docker's implementation for managing clusters running of docker containers.
 
+*NOTE* If you just want to dive in, run the `build_cluster.sh` in the repository to setup the
+cluster.
+
 ## Terminology
 
 ### Docker
@@ -87,6 +90,7 @@ First, we will need to create a Machine to host or Consul instance and start our
 This will not be part allocated as part of our cluster.
 
 ```sh
+# Create the Consul VM
 $ docker-machine create \
   -d virtualbox \
   consul-kv
@@ -109,6 +113,9 @@ Setting Docker configuration on the remote daemon...
 Checking connection to Docker...
 Docker is up and running!
 To see how to connect Docker to this machine, run: docker-machine env consul-kv
+
+# Change to the Consul VM environment
+$ eval $(docker-machine env consul-kv)
 
 $ docker $(docker-machine config consul-kv) run -d \
   -p 8500:8500 \
@@ -286,7 +293,46 @@ Creating machine...
 
 Now if we open the [Consul Web UI](http://localhost:8500/ui/), we should be able to see our master and work nodes.
 
-### Managing the Swarm
+Registering with Consul
+===============
+
+We need a way to register our new services with Consul. For that, we will run [Registrator] in a
+container on every node in our cluster.
+
+```sh
+# Register Master Node
+$ eval $(docker-machine env c0-master)
+$ docker run -d \
+    -v /var/run/docker.sock:/tmp/docker.sock \
+    --name 'registrator' \
+    gliderlabs/registrator \
+    consul://$(docker-machine ip consul-kv):8500
+
+# Register Node 1
+$ eval $(docker-machine env c0-n1)
+$ docker run -d \
+    -v /var/run/docker.sock:/tmp/docker.sock \
+    --name 'registrator' \
+    gliderlabs/registrator \
+    consul://$(docker-machine ip consul-kv):8500
+
+# Register Node 2
+$ eval $(docker-machine env c0-n2)
+$ docker run -d \
+    -v /var/run/docker.sock:/tmp/docker.sock \
+    --name 'registrator' \
+    gliderlabs/registrator \
+    consul://$(docker-machine ip consul-kv):8500
+```
+
+This will monitor for any ports that are opened by our services and report them to our *consul-kv* instance for service discovery.
+There are additional environment variables that we can add to our docker containers will can provide more information about our service.
+Please reference the [GliderLabs Service](http://gliderlabs.com/registrator/latest/user/services/) documentation for more inforamtion.
+
+We should now be able to see our *swarm* node in the [Consul WebUI](http://localhost:8500).
+
+Managing the Swarm
+===============
 
 Now that we have all of the nodes for our cluster, we can communicate with the entire cluster as one
 unit. We start by sourcing the swarm environment.
@@ -342,26 +388,6 @@ CPUs: 3
 Total Memory: 3.064 GiB
 Name: c0-master
 ```
-
-Registering with Consul
-===============
-
-We need a way to register our new services with Consul. For that, we will run [Registrator] in a
-container on every node in our cluster.
-
-```sh
-$ docker run -d \
-    -v /var/run/docker.sock:/tmp/docker.sock \
-    --name 'registrator' \
-    gliderlabs/registrator \
-    consul://$(docker-machine ip consul-kv):8500
-```
-
-This will monitor for any ports that are opened by our services and report them to our *consul-kv* instance for service discovery.
-There are additional environment variables that we can add to our docker containers will can provide more information about our service.
-Please reference the [GliderLabs Service](http://gliderlabs.com/registrator/latest/user/services/) documentation for more inforamtion.
-
-We should now be able to see our *swarm* node in the [Consul WebUI](http://localhost:8500).
 
 Deploying containers
 ===============
@@ -466,7 +492,6 @@ References
  * [Consul Docker Image](https://hub.docker.com/r/progrium/consul/)
  * [Another Consul Docker Image](https://hub.docker.com/r/qnib/consul/)
  * [Instruction on getting *etcd* running under docker can be found here](https://coreos.com/etcd/docs/latest/docker_guide.html).
- * [Registrator](http://gliderlabs.com/registrator/latest/user/quickstart/)
 
 ### Elastic Search Articles
 
@@ -488,3 +513,4 @@ References
 
 [VirtualBox]: https://www.virtualbox.org/wiki/Downloads
 [VirtualBox Extension Pack]: https://www.virtualbox.org/wiki/Downloads
+[Registrator]: http://gliderlabs.com/registrator/latest/user/quickstart/
