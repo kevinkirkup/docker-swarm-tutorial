@@ -6,6 +6,17 @@ Creating a Docker Swarm Cluster on OS X Virtualbox
 *NOTE* If you just want to dive in, run the `build_cluster.sh` in the repository to setup the
 cluster.
 
+## Pre-Requisites
+
+ This tutorial was written with Mac OSX in mind. Although Docker and VirtualBox are avialable for Linux and Windows,
+ The steps below may not completely work in either of those environments.
+
+ Please feel free to submit pull requests for any changes that may be needed to make this applicable for Linux and/or Windows, and I'm include them.
+
+ * [VirtualBox]
+ * [VirtualBox Extension Pack]
+ * [Docker Toolbox]
+
 ## Terminology
 
 ### Docker
@@ -29,17 +40,6 @@ Kubernetes volumes build upon Docker Volumes, adding provisioning of the volume 
 Setup Docker Swarm Discovery Service
 ===============
 
-## Pre-Requisites
-
- This tutorial was written with Mac OSX in mind. Although Docker and VirtualBox are avialable for Linux and Windows,
- The steps below may not completely work in either of those environments.
-
- Please feel free to submit pull requests for any changes that may be needed to make this applicable for Linux and/or Windows, and I'm include them.
-
- * [VirtualBox]
- * [VirtualBox Extension Pack]
- * [Docker Toolbox]
-
 The first decision that we need to make when we are configuring our cluster is which service discovery method that we are going to use.
 There are a number of different Discover Servers supported by Docker Swarm:
 
@@ -48,7 +48,12 @@ There are a number of different Discover Servers supported by Docker Swarm:
  * [etcd] - CoreOS
  * [zookeeper] - Apache
 
-For more detailed information, please refer to the *Discovery Services* section below
+[Here](http://demo.consul.io/ui/) is a live demo of the Consul Discovery Service.
+
+The Discovery server is responsible for requesting and reporting the health of the nodes in the
+cluster as well as providing discovery information about the available services.
+Most also include a basic Key/Value store that can be used to store configuration information for
+cluster nodes and services.
 
 ## Using DockerHub for Swarm Discovery
 
