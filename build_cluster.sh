@@ -32,10 +32,11 @@ docker $(docker-machine config consul-kv) run -d -h consul \
   -p 8600:53/udp \
   --name consul \
   progrium/consul \
+  -log-level debug \
+  -data-dir /tmp/consul \
   -server \
   -bootstrap \
   -advertise $NODE_IP \
-  -log-level debug \
   -dc vb1
 
 echo ----------------------------------------
@@ -102,9 +103,10 @@ for i in "${SWARM_NODES[@]}"; do
     -p $NODE_IP:8600:53 \
     -p $NODE_IP:8600:53/udp \
     progrium/consul \
-    -server \
     -log-level debug \
-    -dc vb1
+    -data-dir /tmp/consul \
+    -server \
+    -dc vb1 \
     -advertise $NODE_IP \
     -join $CONSUL_MASTER_IP
 
