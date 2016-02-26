@@ -1,3 +1,3 @@
-#!/bin/sh
+#!/bin/bash
 
-cat /proc/meminfo |grep Free
+echo $(cat /proc/meminfo |grep Free)
