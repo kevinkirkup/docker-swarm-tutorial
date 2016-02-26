@@ -497,6 +497,7 @@ References
  * [Consul Docker Image](https://hub.docker.com/r/progrium/consul/)
  * [Another Consul Docker Image](https://hub.docker.com/r/qnib/consul/)
  * [Instruction on getting *etcd* running under docker can be found here](https://coreos.com/etcd/docs/latest/docker_guide.html).
+ * [An Introduction to Using Consul](https://www.digitalocean.com/community/tutorials/an-introduction-to-using-consul-a-service-discovery-system-on-ubuntu-14-04)
 
 ### Elastic Search Articles
 
