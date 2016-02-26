@@ -15,11 +15,12 @@ docker-machine stop consul-kv
 VBoxManage modifyvm "consul-kv" --natpf1 "Consul,tcp,127.0.0.1,8500,,8500"
 docker-machine start consul-kv
 
-# Change to the Consul VM
 eval $(docker-machine env consul-kv)
-NODE_IP=$(docker-machine ip consul-kv)
 
-# Create the Consul container
+# Create the Consul servers container
+#
+# DO NOT DO THIS IN PRODUCTION!!
+# We are going to run 1 server
 docker $(docker-machine config consul-kv) run -d -h consul \
   -p 8300:8300 \
   -p 8301:8301 \
@@ -30,13 +31,9 @@ docker $(docker-machine config consul-kv) run -d -h consul \
   -p 8500:8500 \
   -p 8600:53 \
   -p 8600:53/udp \
+  -v $(pwd)/consul/config/consul.json:/config/consul.json  \
   --name consul \
   progrium/consul \
-  -log-level debug \
-  -data-dir /tmp/consul \
-  -server \
-  -bootstrap \
-  -advertise $NODE_IP \
   -dc vb1
 
 echo ----------------------------------------
@@ -45,7 +42,7 @@ echo ----------------------------------------
 docker logs consul
 echo ----------------------------------------
 
-#CONSUL_MASTER_IP="$(docker inspect -f '{{.NetworkSettings.IPAddress}}' consul)"
+#CONSUL_MASTER_IP="$(docker inspect -f '{{.NetworkSettings.IPAddress}}' consul-1)"
 CONSUL_MASTER_IP="$(docker-machine ip consul-kv)"
 
 ##################################################
@@ -59,8 +56,8 @@ docker-machine create \
   -d virtualbox \
   --swarm \
   --swarm-master \
-  --swarm-discovery="consul://$(docker-machine ip consul-kv):8500" \
-  --engine-opt="cluster-store=consul://$(docker-machine ip consul-kv):8500" \
+  --swarm-discovery="consul://$CONSUL_MASTER_IP:8500" \
+  --engine-opt="cluster-store=consul://$CONSUL_MASTER_IP:8500" \
   --engine-opt="cluster-advertise=eth1:2376" \
   $CLUSTER_MASTER
 
@@ -75,22 +72,23 @@ for i in "${SWARM_NODES[@]}"; do
   docker-machine create \
     -d virtualbox \
     --swarm \
-    --swarm-discovery="consul://$(docker-machine ip consul-kv):8500" \
-    --engine-opt="cluster-store=consul://$(docker-machine ip consul-kv):8500" \
+    --swarm-discovery="consul://$CONSUL_MASTER_IP:8500" \
+    --engine-opt="cluster-store=consul://$CONSUL_MASTER_IP:8500" \
     --engine-opt="cluster-advertise=eth1:2376" \
     $i
 done
 
 
 ##################################################
-echo Add Consul and Registrator
+echo Add Consul Clients and Registrator
 ##################################################
 SWARM_NODES=("$CLUSTER_MASTER" "${CLUSTER}-n1" "${CLUSTER}-n2")
-
 for i in "${SWARM_NODES[@]}"; do
 
   NODE_IP=$(docker-machine ip $i)
 
+  # We are going to setup a client on each node in the cluster
+  # to report data back to the Consul servers
   eval "$(docker-machine env $i)"
   docker run --name consul-$i -d -h consul-$i \
     -p $NODE_IP:8300:8300 \
@@ -104,8 +102,6 @@ for i in "${SWARM_NODES[@]}"; do
     -p $NODE_IP:8600:53/udp \
     progrium/consul \
     -log-level debug \
-    -data-dir /tmp/consul \
-    -server \
     -dc vb1 \
     -advertise $NODE_IP \
     -join $CONSUL_MASTER_IP
@@ -123,7 +119,7 @@ for i in "${SWARM_NODES[@]}"; do
       -h registrator-$i \
       --name registrator-$i \
       gliderlabs/registrator \
-      consul://$(docker-machine ip consul-kv):8500
+      consul://$CONSUL_MASTER_IP:8500
 
 done
 
