@@ -85,6 +85,11 @@ for i in "${SWARM_NODES[@]}"; do
     $i
 done
 
+##################################################
+echo Create Overlay Network
+##################################################
+eval $(docker-machine env --swarm $CLUSTER_MASTER)
+docker network create -d overlay myCluster
 
 ##################################################
 echo Add Consul Clients and Registrator
