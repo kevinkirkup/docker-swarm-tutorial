@@ -21,6 +21,10 @@ eval $(docker-machine env consul-kv)
 #
 # DO NOT DO THIS IN PRODUCTION!!
 # We are going to run 1 server
+#
+# Mount the docker socket so we can request the health
+# using a separate docker container that the one we are running in
+#
 docker $(docker-machine config consul-kv) run -d -h consul \
   -p 8300:8300 \
   -p 8301:8301 \
@@ -31,7 +35,10 @@ docker $(docker-machine config consul-kv) run -d -h consul \
   -p 8500:8500 \
   -p 8600:53 \
   -p 8600:53/udp \
-  -v $(pwd)/consul/config/consul.json:/config/consul.json  \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $(pwd)/consul/config:/config  \
+  -v $(pwd)/consul/scripts/check_mem.sh:/bin/check_mem.sh \
+  -v $(pwd)/consul/scripts/check_cpu.sh:/bin/check_cpu.sh \
   --name consul \
   progrium/consul \
   -dc vb1
@@ -89,6 +96,14 @@ for i in "${SWARM_NODES[@]}"; do
 
   # We are going to setup a client on each node in the cluster
   # to report data back to the Consul servers
+  #
+  # Mount the docker socket so we can request the health
+  # using a separate docker container that the one we are running in
+  #
+  # We don't want to register the consul service ports, so mark
+  # the service as SERVICE_IGNORE. This will prevent the registrator
+  # from register the service ports with the Consul Server
+  #
   eval "$(docker-machine env $i)"
   docker run --name consul-$i -d -h consul-$i \
     -p $NODE_IP:8300:8300 \
@@ -100,6 +115,11 @@ for i in "${SWARM_NODES[@]}"; do
     -p $NODE_IP:8500:8500 \
     -p $NODE_IP:8600:53 \
     -p $NODE_IP:8600:53/udp \
+    -e "SERVICE_IGNORE=true" \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v $(pwd)/consul/config/system.json:/config/system.json  \
+    -v $(pwd)/consul/scripts/check_mem.sh:/bin/check_mem.sh \
+    -v $(pwd)/consul/scripts/check_cpu.sh:/bin/check_cpu.sh \
     progrium/consul \
     -log-level debug \
     -dc vb1 \
@@ -124,20 +144,20 @@ for i in "${SWARM_NODES[@]}"; do
 done
 
 
-###################################################
-#echo Create some services
-###################################################
-#
-#eval $(docker-machine env --swarm $CLUSTER_MASTER)
-#docker run -d --name redis.0 -p 10000:6379 \
-#    -e "SERVICE_NAME=db" \
-#    -e "SERVICE_TAGS=master,backups" \
-#    -e "SERVICE_REGION=vb1" redis
-#
-#docker run -d --name nginx.0 -p 4443:443 -p 8000:80 \
-#    -e "SERVICE_443_NAME=https" \
-#    -e "SERVICE_443_ID=https.12345" \
-#    -e "SERVICE_443_SNI=enabled" \
-#    -e "SERVICE_80_NAME=http" \
-#    -e "SERVICE_REGION=vb1" \
-#    -e "SERVICE_TAGS=www" nginx
+##################################################
+echo Create some services
+##################################################
+
+eval $(docker-machine env --swarm $CLUSTER_MASTER)
+docker run -d --name redis.0 -p 10000:6379 \
+    -e "SERVICE_NAME=db" \
+    -e "SERVICE_TAGS=master,backups" \
+    -e "SERVICE_REGION=vb1" redis
+
+docker run -d --name nginx.0 -p 4443:443 -p 8000:80 \
+    -e "SERVICE_443_NAME=https" \
+    -e "SERVICE_443_ID=https.12345" \
+    -e "SERVICE_443_SNI=enabled" \
+    -e "SERVICE_80_NAME=http" \
+    -e "SERVICE_REGION=vb1" \
+    -e "SERVICE_TAGS=www" nginx
