@@ -25,6 +25,8 @@ eval $(docker-machine env consul-kv)
 # Mount the docker socket so we can request the health
 # using a separate docker container that the one we are running in
 #
+CONSUL_MASTER_IP="$(docker-machine ip consul-kv)"
+
 docker $(docker-machine config consul-kv) run -d -h consul \
   -p 8300:8300 \
   -p 8301:8301 \
@@ -37,10 +39,12 @@ docker $(docker-machine config consul-kv) run -d -h consul \
   -p 8600:53/udp \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $(pwd)/consul/config:/config  \
-  -v $(pwd)/consul/scripts/check_mem.sh:/bin/check_mem.sh \
-  -v $(pwd)/consul/scripts/check_cpu.sh:/bin/check_cpu.sh \
+  -v $(pwd)/consul/scripts/mem.sh:/data/consul/scripts/mem.sh \
+  -v $(pwd)/consul/scripts/cpu.sh:/data/consul/scripts/cpu.sh \
+  -v $(pwd)/consul/scripts/disk.sh:/data/consul/scripts/disk.sh \
   --name consul \
   progrium/consul \
+  -advertise $CONSUL_MASTER_IP \
   -dc vb1
 
 echo ----------------------------------------
@@ -48,9 +52,6 @@ echo Logs
 echo ----------------------------------------
 docker logs consul
 echo ----------------------------------------
-
-#CONSUL_MASTER_IP="$(docker inspect -f '{{.NetworkSettings.IPAddress}}' consul-1)"
-CONSUL_MASTER_IP="$(docker-machine ip consul-kv)"
 
 ##################################################
 echo Create the Swarm Nodes
@@ -110,7 +111,7 @@ for i in "${SWARM_NODES[@]}"; do
   # from register the service ports with the Consul Server
   #
   eval "$(docker-machine env $i)"
-  docker run --name consul-$i -d -h consul-$i \
+  docker run --name consul-$i -d -h $i \
     -p $NODE_IP:8300:8300 \
     -p $NODE_IP:8301:8301 \
     -p $NODE_IP:8301:8301/udp \
@@ -118,17 +119,20 @@ for i in "${SWARM_NODES[@]}"; do
     -p $NODE_IP:8302:8302/udp \
     -p $NODE_IP:8400:8400 \
     -p $NODE_IP:8500:8500 \
-    -p $NODE_IP:8600:53 \
-    -p $NODE_IP:8600:53/udp \
+    -p $NODE_IP:53:53 \
+    -p $NODE_IP:53:53/udp \
     -e "SERVICE_IGNORE=true" \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v $(pwd)/consul/config/system.json:/config/system.json  \
-    -v $(pwd)/consul/scripts/check_mem.sh:/bin/check_mem.sh \
-    -v $(pwd)/consul/scripts/check_cpu.sh:/bin/check_cpu.sh \
+    -v $(pwd)/consul/scripts/mem.sh:/data/consul/scripts/mem.sh \
+    -v $(pwd)/consul/scripts/cpu.sh:/data/consul/scripts/cpu.sh \
+    -v $(pwd)/consul/scripts/disk.sh:/data/consul/scripts/disk.sh \
     progrium/consul \
     -log-level debug \
     -dc vb1 \
+    -node $i \
     -advertise $NODE_IP \
+    -client 0.0.0.0 \
     -join $CONSUL_MASTER_IP
 
   echo ----------------------------------------
@@ -137,14 +141,16 @@ for i in "${SWARM_NODES[@]}"; do
   docker logs consul-$i
   echo ----------------------------------------
 
-  echo "Starting Registrator in node $i"
+  echo "Starting Registrator on node $i"
+
   eval "$(docker-machine env $i)"
   docker run -d \
       -v /var/run/docker.sock:/tmp/docker.sock \
-      -h registrator-$i \
-      --name registrator-$i \
+      -h $i \
+      --name registrator \
       gliderlabs/registrator \
-      consul://$CONSUL_MASTER_IP:8500
+      -ip $NODE_IP \
+      consul://$NODE_IP:8500
 
 done
 
