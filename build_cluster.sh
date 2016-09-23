@@ -56,8 +56,8 @@ docker $(docker-machine config consul-kv) run -d -h consul \
   -v $(pwd)/consul/scripts/disk.sh:/data/consul/scripts/disk.sh \
   --name consul \
   progrium/consul \
-  -advertise $CONSUL_MASTER_IP \
-  -dc vb1
+  -node consul-kv \
+  -advertise $CONSUL_MASTER_IP
 
 echo ----------------------------------------
 echo Logs
