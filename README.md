@@ -502,6 +502,7 @@ References
 ### Elastic Search Articles
 
  * [Elastic Search Docker Image](https://hub.docker.com/r/qnib/elk/)
+ * [Setting up Logstash with Docker](http://www.thedreaming.org/2014/11/21/docker-logstash/)
 
 
 [etcd]: https://coreos.com/etcd
