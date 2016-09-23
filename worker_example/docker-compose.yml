@@ -1,0 +1,11 @@
+---
+version: '2'
+services:
+
+  # Producer adding work to the task queue
+  worker:
+    image: alpine
+    restart: always
+    volumes:
+      - ./worker:/worker
+    command: /bin/sh /worker/startup.sh

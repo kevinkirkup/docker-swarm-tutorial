@@ -1,0 +1,15 @@
+{
+  "datacenter": "vb1",
+  "bootstrap": true,
+  "server": true,
+  "ui_dir": "/ui",
+  "data_dir": "/data",
+  "log_level": "debug",
+  "client_addr": "0.0.0.0",
+  "disable_update_check": true,
+  "recursor": "8.8.8.8",
+  "ports": {
+    "dns": 53
+  }
+}
+
