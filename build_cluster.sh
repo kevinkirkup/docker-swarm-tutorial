@@ -25,6 +25,18 @@ eval $(docker-machine env consul-kv)
 # Mount the docker socket so we can request the health
 # using a separate docker container that the one we are running in
 #
+
+# Notes!
+# On consul-kv, I'm able to query the DNS with:
+#
+# $ docker run -it joffotron/docker-net-tools
+# $ dig @172.17.0.1 -p 8600 db.service.consul
+#
+# On c0-master(c0-n1, ...), I'm able to query the DNS with:
+#
+# $ docker run -it joffotron/docker-net-tools
+# $ dig @192.168.99.112 -p 8600 db.service.consul
+
 CONSUL_MASTER_IP="$(docker-machine ip consul-kv)"
 
 docker $(docker-machine config consul-kv) run -d -h consul \
