@@ -4,6 +4,7 @@
 Celery Task Definitions
 '''
 from celery import Celery
+import socket
 
 app = Celery('tasks')
 app.config_from_object('celeryconfig')
@@ -13,4 +14,6 @@ app.config_from_object('celeryconfig')
 def print_some_data(some_data):
     """Print the specified data to stdout"""
 
-    print( "Worker: %s" % str(some_data))
+    wid = str(socket.gethostname())
+    data = str(some_data)
+    print("Worker-%s: %s" % (wid, data))
